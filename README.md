@@ -1,8 +1,38 @@
-# Starter Kit for Vite, React, TypeScript, Tailwind and Node.js ESM
+# Gemini Travel Assistant
 
-_Minimal, sensible defaults, fast._
+This is a Travel Assistant made using Gemini API. It is a web app that helps you plan your trip by providing you with the best places to visit, eat and stay at your destination.
 
-Read [the blog post about this template](https://cpojer.net/posts/fastest-frontend-tooling-in-2022).
+### Run Locally
+
+Clone the project
+
+```bash
+  git clone git@github.com:onlyoneaman/trip-planner-gemini.git
+```
+
+Go to the project directory
+
+```bash
+  cd trip-planner-gemini
+```
+
+Install dependencies
+
+```bash
+  npm install
+```
+
+Copy .env.template to .env and add your API key
+
+```bash
+  cp .env.template .env
+```
+
+Start the server
+
+```bash
+  npm run dev
+```
 
 ## Technologies
 
@@ -23,29 +53,3 @@ Read [the blog post about this template](https://cpojer.net/posts/fastest-fronte
 - `pnpm build` for production builds.
 
 _Note: You can install `pnpm` via `homebrew` on macOS: `brew install pnpm`._
-
-## Protips for the fastest Developer Experience
-
-- Use [`npm-run-all`](https://github.com/mysticatea/npm-run-all) to parallelize local test runs.
-- Prettier and eslint have `--cache` flags. Use them!
-- Do not run prettier inside of `eslint`. It commonly takes 50% of the eslint runtime!
-- Automatically sort imports when running prettier/saving the document via [`@ianvs/prettier-plugin-sort-imports`](https://github.com/ianvs/prettier-plugin-sort-imports).
-- Use `swc` with `ts-node` for fast node scripts with [ESM](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/). See below ↓
-
-## Run node scripts with ESM and TypeScript, fast.
-
-Create a `script.ts` file, run `chmod x script.ts` and execute it via `./script.ts`.
-
-```
-#!/usr/bin/env node --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm
-
-console.log('Your code goes here.');
-```
-
-Use this to restart your scripts instantly when a file changes:
-
-```
-#!/usr/bin/env NODE_ENV=development node --watch --no-warnings --experimental-specifier-resolution=node --loader ts-node/esm
-
-console.log('This processes instantly restarts when a file changes.');
-```
