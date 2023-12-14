@@ -2,7 +2,7 @@ import helpers from "../helpers/index.ts";
 
 const googleapis = {
   generateContent: async (params: any, headers = {}) => {
-    const apiKey = import.meta.env.VITE_API_KEY;
+    const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
     return helpers.api.post({
       data: params, headers,
       url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`
