@@ -1,17 +1,28 @@
 import React, { useState } from "react";
+import services from "../../services/index.ts";
+import helpers from "../../helpers/index.js";
+import PlannerForm from "./PlannerForm.js";
+import FinalItinerary from "./FinalItinerary.js";
 
 const Planner = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState("");
-  const [place, setPlace] = useState("");
-  const [days, setDays] = useState("");
-  const [additionalInfo, setAdditionalInfo] = useState("");
+  const [fullResponse, setFullResponse] = useState(null);
 
-  const apiKey = import.meta.env.VITE_API_KEY;
+  const [place, setPlace] = useState(
+    helpers.DEFAULT_VALUES.FORM.place
+  );
+  const [days, setDays] = useState(
+    helpers.DEFAULT_VALUES.FORM.days
+  );
+  const [additionalInfo, setAdditionalInfo] = useState(
+    helpers.DEFAULT_VALUES.FORM.additionalInfo
+  );
+
+  const [error, setError] = useState(null);
 
   const callGenerateContentAPI = async () => {
     setIsLoading(true);
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
     const template = `Plan me an itinerary for this place ${place} for ${days} days.\n${additionalInfo ? 'Additional instructions: ' + additionalInfo : ''}`;
 
     const requestData = {
@@ -34,87 +45,76 @@ const Planner = () => {
     };
 
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await services.googleapis.generateContent(requestData);
+      setFullResponse(response);
+      const data = response.data;
+      if(response.err) {
+        console.error('Error during API call:', response.err.error);
+        setError(response.err?.error?.message);
+        return;
       }
-
-      const data = await response.json();
       const extractedText = data.candidates[0].content.parts[0].text;
       setResponse(extractedText);
     } catch (error) {
       console.error('Error during API call:', error);
+      setError(error?.response?.data?.error?.message);
     } finally {
       setIsLoading(false);
     }
   };
 
+  const newItinerary = () => {
+    setResponse("");
+    setFullResponse(null);
+    setError(null);
+  }
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Travel Planner</h1>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="place">
-          Place
-        </label>
-        <input
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          id="place"
-          type="text"
-          placeholder="Enter destination"
-          value={place}
-          onChange={(e) => setPlace(e.target.value)}
-        />
-      </div>
+      {
+        !response && (
+          <>
+            <PlannerForm
+              place={place}
+              setPlace={setPlace}
+              days={days}
+              setDays={setDays}
+              additionalInfo={additionalInfo}
+              setAdditionalInfo={setAdditionalInfo}
+            />
 
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="days">
-          Number of Days
-        </label>
-        <input
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          id="days"
-          type="number"
-          placeholder="Enter number of days"
-          value={days}
-          onChange={(e) => setDays(e.target.value)}
-        />
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="additionalInfo">
-          Additional Info
-        </label>
-        <textarea
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          id="additionalInfo"
-          placeholder="Any extra instructions or preferences"
-          value={additionalInfo}
-          onChange={(e) => setAdditionalInfo(e.target.value)}
-        />
-      </div>
-
-      <button
-        className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-        onClick={callGenerateContentAPI}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Loading...' : 'Plan My Trip'}
-      </button>
+            <button
+              className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={isLoading}
+              onClick={callGenerateContentAPI}
+            >
+              {isLoading ?
+                'Generating Itinerary...'
+                : 'Plan My Trip'}
+            </button>
+          </>
+        )
+      }
 
       {response && (
-        <div className="mt-4">
-          <h2 className="text-xl font-bold">Itinerary</h2>
-          <p className="text-gray-700">{response}</p>
-        </div>
+        <FinalItinerary
+          mainText={response}
+          newItinerary={newItinerary}
+          days={days}
+          place={place}
+        />
       )}
+
+      {
+        error && (
+          <div className="mt-4">
+            <h2 className="text-xl font-bold">Error</h2>
+            <p className="text-red-700">{error}</p>
+          </div>
+        )
+      }
+
     </div>
   );
 };
