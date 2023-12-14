@@ -3,6 +3,7 @@ import services from "../../services/index.ts";
 import helpers from "../../helpers/index.ts";
 import PlannerForm from "./PlannerForm.tsx";
 import FinalItinerary from "./FinalItinerary.tsx";
+import ReactGA from "react-ga4";
 
 const Planner = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +28,11 @@ const Planner = () => {
     const template = `Plan me an itinerary for this place ${place} for ${days} days.\n${additionalInfo ? 'Additional instructions: ' + additionalInfo : ''}`;
 
     const requestData = formGenAiRequestData(template);
-
+    ReactGA.event({
+      category: "Planner",
+      action: "Create Itinerary",
+      label: "Planner",
+    });
     try {
       const response = await services.googleapis.generateContent(requestData);
       setFullResponse(response);
