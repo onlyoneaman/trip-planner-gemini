@@ -7,6 +7,7 @@ type FinalItineraryProps = {
   newItinerary: () => void;
   days: number;
   place: string;
+  placeDetails: string;
 }
 
 const FinalItinerary = (
@@ -14,7 +15,8 @@ const FinalItinerary = (
     mainText: m,
     newItinerary,
     days,
-    place
+    place,
+    placeDetails
   }: FinalItineraryProps
 ) => {
 
@@ -24,6 +26,9 @@ const FinalItinerary = (
       <h2 className="text-xl font-bold">
         {`${days} Day Itinerary for ${place}`}
       </h2>
+      <ReactMarkdown className="markdown">
+        {placeDetails}
+      </ReactMarkdown>
       <ReactMarkdown className="markdown">
         {m}
       </ReactMarkdown>

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import services from "../../services/index.ts";
-import helpers from "../../helpers/index.js";
-import PlannerForm from "./PlannerForm.js";
-import FinalItinerary from "./FinalItinerary.js";
+import helpers from "../../helpers/index.ts";
+import PlannerForm from "./PlannerForm.tsx";
+import FinalItinerary from "./FinalItinerary.tsx";
 
 const Planner = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState("");
+  const [placeDetails, setPlaceDetails] = useState("");
   const [fullResponse, setFullResponse] = useState(null);
 
   const [place, setPlace] = useState(
@@ -21,28 +22,11 @@ const Planner = () => {
 
   const [error, setError] = useState(null);
 
-  const callGenerateContentAPI = async () => {
+  const createItineraryCall = async () => {
     setIsLoading(true);
     const template = `Plan me an itinerary for this place ${place} for ${days} days.\n${additionalInfo ? 'Additional instructions: ' + additionalInfo : ''}`;
 
-    const requestData = {
-      contents: [
-        {
-          parts: [
-            {
-              text: template
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.9,
-        topK: 1,
-        topP: 1,
-        maxOutputTokens: 2048,
-        stopSequences: []
-      }
-    };
+    const requestData = formGenAiRequestData(template);
 
     try {
       const response = await services.googleapis.generateContent(requestData);
@@ -63,8 +47,49 @@ const Planner = () => {
     }
   };
 
+  const getPlaceDetails = async () => {
+    const template = `Give me brief description about this place: ${place}. Keep it less than 400 characters. Respond with "I don't know" if you don't know.`;
+    const requestData = formGenAiRequestData(template);
+    try {
+      const response = await services.googleapis.generateContent(requestData);
+      const data = response.data;
+      const extractedText = data.candidates[0].content.parts[0].text;
+      setPlaceDetails(extractedText);
+    } catch (error) {
+      console.error('Error during API call:', error);
+    } finally {
+    }
+  };
+
+  const formGenAiRequestData = (text: string) => {
+    return {
+      contents: [
+        {
+          parts: [
+            {
+              text: text
+            }
+          ]
+        }
+      ],
+        generationConfig: {
+          temperature: 0.9,
+          topK: 1,
+          topP: 1,
+          maxOutputTokens: 2048,
+          stopSequences: []
+      }
+    };
+  }
+
+  const planMyTrip = () => {
+    createItineraryCall();
+    getPlaceDetails();
+  }
+
   const newItinerary = () => {
     setResponse("");
+    setPlaceDetails("");
     setFullResponse(null);
     setError(null);
   }
@@ -87,7 +112,7 @@ const Planner = () => {
             <button
               className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
               disabled={isLoading}
-              onClick={callGenerateContentAPI}
+              onClick={planMyTrip}
             >
               {isLoading ?
                 'Generating Itinerary...'
@@ -103,6 +128,7 @@ const Planner = () => {
           newItinerary={newItinerary}
           days={days}
           place={place}
+          placeDetails={placeDetails}
         />
       )}
 
