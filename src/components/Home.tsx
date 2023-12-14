@@ -1,11 +1,12 @@
 import Planner from "./Planner";
+import Layout from "./Layout";
 
 const Home = () => {
 
   return(
-    <div>
+    <Layout>
       <Planner />
-    </div>
+    </Layout>
   )
 }
 
