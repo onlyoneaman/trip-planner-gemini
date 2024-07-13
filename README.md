@@ -40,16 +40,15 @@ Start the server
 - [React](https://reactjs.org/)
 - [TypeScript](https://www.typescriptlang.org)
 - [Tailwind](https://tailwindcss.com/)
-- [pnpm](https://pnpm.io/ja/) (_Optional_)
 
 ![screenshot of `App.tsx`](./screenshot.png)
 
 ## Setup
 
 - Press the "Use this template" on the top of this repository's GitHub page.
-- Run `pnpm install` (or `npm install` if you don't use `pnpm`).
-- `pnpm dev` for development.
-- Use `pnpm test` to run tests.
-- `pnpm build` for production builds.
+- Run `npm install`.
+- `npm dev` for development.
+- Use `npm test` to run tests.
+- `npm build` for production builds.
 
 _Note: You can install `pnpm` via `homebrew` on macOS: `brew install pnpm`._
