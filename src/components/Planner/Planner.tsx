@@ -1,30 +1,32 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import services from "../../services/index.ts";
 import helpers from "../../helpers/index.ts";
-import PlannerForm from "./PlannerForm.tsx";
-import FinalItinerary from "./FinalItinerary.tsx";
+import PlannerForm from "./PlannerForm";
+import FinalItinerary from "./FinalItinerary";
+import ErrorDisplay from "../ErrorDisplay.tsx";
 import ReactGA from "react-ga4";
+import downloadItinerary from "../../helpers/download.js";
 
-const Planner = () => {
+const Planner: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState("");
   const [placeDetails, setPlaceDetails] = useState("");
   const [fullResponse, setFullResponse] = useState(null);
 
-  const [place, setPlace] = useState(
-    helpers.DEFAULT_VALUES.FORM.place
-  );
-  const [days, setDays] = useState(
-    helpers.DEFAULT_VALUES.FORM.days
-  );
-  const [additionalInfo, setAdditionalInfo] = useState(
-    helpers.DEFAULT_VALUES.FORM.additionalInfo
-  );
+  const [place, setPlace] = useState(helpers.DEFAULT_VALUES.FORM.place);
+  const [days, setDays] = useState(helpers.DEFAULT_VALUES.FORM.days);
+  const [additionalInfo, setAdditionalInfo] = useState(helpers.DEFAULT_VALUES.FORM.additionalInfo);
 
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const createItineraryCall = async () => {
+    if (!place || !days) {
+      setError("Please fill in all required fields.");
+      return;
+    }
+
     setIsLoading(true);
+    setError(null);
     const template = `Plan me an itinerary for this place ${place} for ${days} days.\n${additionalInfo ? 'Additional instructions: ' + additionalInfo : ''}`;
 
     const requestData = formGenAiRequestData(template);
@@ -37,16 +39,17 @@ const Planner = () => {
       const response = await services.googleapis.generateContent(requestData);
       setFullResponse(response);
       const data = response.data;
-      if(response.err) {
+      if (response.err) {
         console.error('Error during API call:', response.err.error);
-        setError(response.err?.error?.message);
+        setError(response.err?.error?.message || "An error occurred while generating the itinerary.");
         return;
       }
       const extractedText = data.candidates[0].content.parts[0].text;
       setResponse(extractedText);
+      getPlaceDetails();
     } catch (error) {
       console.error('Error during API call:', error);
-      setError(error?.response?.data?.error?.message);
+      setError(error?.response?.data?.error?.message || "An error occurred while generating the itinerary.");
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +65,6 @@ const Planner = () => {
       setPlaceDetails(extractedText);
     } catch (error) {
       console.error('Error during API call:', error);
-    } finally {
     }
   };
 
@@ -77,19 +79,14 @@ const Planner = () => {
           ]
         }
       ],
-        generationConfig: {
-          temperature: 0.9,
-          topK: 1,
-          topP: 1,
-          maxOutputTokens: 2048,
-          stopSequences: []
+      generationConfig: {
+        temperature: 0.9,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 2048,
+        stopSequences: []
       }
     };
-  }
-
-  const planMyTrip = () => {
-    createItineraryCall();
-    getPlaceDetails();
   }
 
   const newItinerary = () => {
@@ -99,53 +96,50 @@ const Planner = () => {
     setError(null);
   }
 
+  const downloadItineraryFunc = () => {
+    downloadItinerary(place, days, placeDetails, response);
+
+    ReactGA.event({
+      category: "Planner",
+      action: "Download Itinerary",
+      label: "Planner",
+    });
+  }
+
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 max-w-4xl">
+      <header className="text-center mb-8">
+        <h1 className="text-4xl font-bold text-blue-600">Trip Planner</h1>
+        <p className="text-gray-600">Plan your perfect getaway with AI assistance</p>
+      </header>
 
-      {
-        !response && (
-          <>
-            <PlannerForm
-              place={place}
-              setPlace={setPlace}
-              days={days}
-              setDays={setDays}
-              additionalInfo={additionalInfo}
-              setAdditionalInfo={setAdditionalInfo}
-            />
-
-            <button
-              className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-              disabled={isLoading}
-              onClick={planMyTrip}
-            >
-              {isLoading ?
-                'Generating Itinerary...'
-                : 'Plan My Trip'}
-            </button>
-          </>
-        )
-      }
-
-      {response && (
+      {!response ? (
+        <PlannerForm
+          place={place}
+          setPlace={setPlace}
+          days={days}
+          setDays={setDays}
+          additionalInfo={additionalInfo}
+          setAdditionalInfo={setAdditionalInfo}
+          isLoading={isLoading}
+          onSubmit={createItineraryCall}
+        />
+      ) : (
         <FinalItinerary
           mainText={response}
           newItinerary={newItinerary}
           days={days}
           place={place}
           placeDetails={placeDetails}
+          onDownload={downloadItineraryFunc}
         />
       )}
 
-      {
-        error && (
-          <div className="mt-4">
-            <h2 className="text-xl font-bold">Error</h2>
-            <p className="text-red-700">{error}</p>
-          </div>
-        )
-      }
+      <ErrorDisplay error={error}/>
 
+      <footer className="mt-8 text-center text-gray-600">
+        <p>&copy; 2024 Trip Planner. All rights reserved.</p>
+      </footer>
     </div>
   );
 };
